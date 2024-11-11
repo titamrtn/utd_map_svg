@@ -1,0 +1,10 @@
+{
+    "name": "titam/utd_map_svg",
+    "type": "wordpress-plugin",
+    "autoload": {
+        "psr-4": {
+            "UtdMapSvg\\": "src/"
+        }
+    },
+    "require": {}
+}
