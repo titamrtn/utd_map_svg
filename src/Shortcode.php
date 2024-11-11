@@ -33,6 +33,7 @@ class Shortcode {
 
 		wp_enqueue_style( 'utd-map-svg' );
 
+		$urls = get_option( 'utd_map_svg_urls', [] );
 		ob_start();
 		include MAP_SVG_PLUGIN_DIR . 'views/' . $shortcode_atts['map'] . '.php';
 		return ob_get_clean();

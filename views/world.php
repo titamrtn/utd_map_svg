@@ -1347,6 +1347,9 @@
 </svg>
 
 <script>
+
+    const urls = <?= json_encode( $urls, JSON_UNESCAPED_SLASHES ) ?>;
+
     document.addEventListener('DOMContentLoaded', function () {
         const paths = document.querySelectorAll('#<?= $mapID ?> path');
         const popover = document.createElement('div');
@@ -1366,26 +1369,34 @@
 
                 let title = path.getAttribute('name');
 
-                if(title == null){
+                if (title == null) {
                     title = path.getAttribute('class');
                 }
 
                 if (title) {
                     popover.textContent = title;
-                    popover.style.left = (event.pageX +xMargin)+ 'px';
+                    popover.style.left = (event.pageX + xMargin) + 'px';
                     popover.style.top = (event.pageY + yMargin) + 'px';
                     popover.style.display = 'block';
                 }
             });
 
             path.addEventListener('mousemove', function (event) {
-                popover.style.left = (event.pageX +xMargin)+ 'px';
+                popover.style.left = (event.pageX + xMargin) + 'px';
                 popover.style.top = (event.pageY + yMargin) + 'px';
             });
 
             path.addEventListener('mouseout', function () {
                 popover.style.display = 'none';
             });
+
+            path.addEventListener('click', function () {
+                let title = path.getAttribute('id');
+                if (title && urls[title]) {
+                    window.open(urls[title], '_blank');
+                }
+            });
+
         });
     });
 </script>
