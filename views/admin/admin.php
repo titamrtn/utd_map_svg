@@ -1,34 +1,35 @@
+<?php
+/**
+ * @var \UtdMapSvg\Database\Entity\Map[] $maps
+ */
+?>
 <div class="wrap">
-	<div id="listTitle">
-		<h1>
-			Map SVG
-		</h1>
-	</div>
+    <div id="listTitle">
+        <h1>
+            Map SVG
+            <a href="admin.php?page=utd_map_svg&render=add" type="submit" class="button">Ajouter une map</a>
+        </h1>
+    </div>
 
-	<form action="admin-post.php" method="POST">
-
-        <input type="hidden" name="action" value="utd_map_svg_save">
-        <table>
-            <thead>
+    <table class="wp-list-table widefat fixed striped pages">
+        <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Shortcode</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+		<?php foreach ( $maps as $map ) : ?>
             <tr>
-                <th>Pays</th>
-                <th>URL</th>
+                <td><?= $map->name ?></td>
+                <td>[utd_map_svg id="<?= $map->slug ?>"]</td>
+                <td>
+                    <a href="admin.php?page=utd_map_svg&render=edit&map_id=<?= $map->id ?>" class="button button-primary">Modifier</a>
+                    <a href="admin.php?page=utd_map_svg_delete&id=<?= $map->id ?>" class="button">Supprimer</a>
+                </td>
             </tr>
-            </thead>
-            <tbody>
-            <?php foreach (\UtdMapSvg\Data\Country::LIST as $code => $countryName) : ?>
-                <tr>
-                    <td><?= $countryName ?></td>
-                    <td>
-                        <input type="text" name="url[<?= $code ?>]" value="<?= $urls[$code] ?? ''?>">
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-        <button type="submit" class="button button-primary">
-            Enregistrer
-        </button>
-	</form>
+		<?php endforeach; ?>
+        </tbody>
+    </table>
 </div>
-

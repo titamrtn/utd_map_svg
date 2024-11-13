@@ -14,6 +14,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 define('MAP_SVG_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
-\UtdMapSvg\Shortcode::init();
+\UtdMapSvg\Database\Migration::init();
 \UtdMapSvg\Admin::init();
 \UtdMapSvg\Updater::init();
+\UtdMapSvg\Shortcode::init();

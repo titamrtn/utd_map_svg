@@ -2,6 +2,8 @@
 
 namespace UtdMapSvg;
 
+use UtdMapSvg\Database\Database;
+
 class Shortcode {
 
 	private function __construct() {
@@ -9,7 +11,7 @@ class Shortcode {
 		add_shortcode( 'utd_map_svg', [ $this, 'render' ] );
 	}
 
-	public static function init() {
+	public static function init(): Shortcode {
 		return new self();
 	}
 
@@ -18,22 +20,23 @@ class Shortcode {
 	}
 
 	public function render( $atts ): false|string {
+
 		$shortcode_atts = shortcode_atts( [
 			'map' => 'world',
-			'line' => '#000000',
-			'fill' => '#edf09c',
-			'hover' => '#f00',
+			'id' => null,
 		], $atts );
 
-		$fill = $shortcode_atts['fill'];
-		$line = $shortcode_atts['line'];
-		$hover = $shortcode_atts['hover'];
+
+		$map = Database::getBySlug( $shortcode_atts['id'] );
+
+		if( ! $map ) {
+			return 'Map non trouver';
+		}
 
 		$mapID = 'map-' . $shortcode_atts['map'];
 
 		wp_enqueue_style( 'utd-map-svg' );
 
-		$urls = get_option( 'utd_map_svg_urls', [] );
 		ob_start();
 		include MAP_SVG_PLUGIN_DIR . 'views/' . $shortcode_atts['map'] . '.php';
 		return ob_get_clean();

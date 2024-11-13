@@ -55,6 +55,7 @@ class Country {
 		"EE"   => "Estonia",
 		"ET"   => "Ethiopia",
 		"FI"   => "Finland",
+		"FR"   => "France",
 		"GF"   => "French Guiana",
 		"GA"   => "Gabon",
 		"GE"   => "Georgia",
