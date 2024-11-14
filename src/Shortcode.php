@@ -2,6 +2,7 @@
 
 namespace UtdMapSvg;
 
+use UtdMapSvg\Data\Country;
 use UtdMapSvg\Database\Database;
 
 class Shortcode {
@@ -29,9 +30,17 @@ class Shortcode {
 
 		$map = Database::getBySlug( $shortcode_atts['id'] );
 
+        $urls = [];
+
 		if( ! $map ) {
 			return 'Map non trouver';
 		}
+
+        foreach ($map->countries as $country) {
+            $urls[$country['country']] = $country['url'];
+        }
+
+        $countries = Country::LIST;
 
 		$mapID = 'map-' . $shortcode_atts['map'];
 

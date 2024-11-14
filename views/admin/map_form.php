@@ -128,7 +128,7 @@
                     <?php endif; ?>
                     </tbody>
                 </table>
-                <button type="button" class="button" id="addCountry" style="margin-top: 10px">Ajouter</button>
+                <button type="button" class="button" id="addCountry" style="margin: 10px 0">Ajouter</button>
             </div>
         </div>
         <div>
