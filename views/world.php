@@ -58,6 +58,10 @@
         cursor: grabbing;
     }
 
+    .map_viewport {
+        transition: all 0.1s ease-in-out;
+    }
+
 </style>
 <div id="<?= $mapID ?>" class="zoom_div_container">
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -1301,7 +1305,7 @@
 
     let isPanning = false;
     let startX, startY;
-    let transform = {x: 0, y: 0, scale: 1};
+    const transform = {x: 0, y: 0, scale: 1};
 
     svg.addEventListener("mousedown", (e) => {
         isPanning = true;
@@ -1310,9 +1314,11 @@
     });
 
     svg.addEventListener("mousemove", (e) => {
-        if (!isPanning) return;
+        if (!isPanning || transform.scale === 1) return;
+
         transform.x = e.clientX - startX;
         transform.y = e.clientY - startY;
+
         updateTransform();
     });
 
@@ -1329,18 +1335,25 @@
 
     function zoom(scaleFactor) {
         const oldScale = transform.scale;
+        transform.scale *= scaleFactor;
+
+        // Don't allow the zoom to go below 1 or above 5
+        transform.scale = Math.max(1, Math.min(5, transform.scale));
+
+        // Calculate the new center position
         const centerX = svg.clientWidth / 2;
         const centerY = svg.clientHeight / 2;
 
-        transform.scale *= scaleFactor;
+        // Adjust the transform to recenter the view
+        transform.x = centerX - (centerX - transform.x) * (transform.scale / oldScale);
+        transform.y = centerY - (centerY - transform.y) * (transform.scale / oldScale);
 
-        transform.scale = Math.max(0.5, Math.min(5, transform.scale));
+        // Ensure the map stays within the visible area
+        const maxX = (svg.clientWidth * (transform.scale - 1)) / 2;
+        const maxY = (svg.clientHeight * (transform.scale - 1)) / 2;
 
-        const dx = centerX - svg.clientWidth / 2;
-        const dy = centerY - svg.clientHeight / 2;
-
-        transform.x -= dx * (transform.scale - oldScale);
-        transform.y -= dy * (transform.scale - oldScale);
+        transform.x = Math.min(maxX, Math.max(-maxX, transform.x));
+        transform.y = Math.min(maxY, Math.max(-maxY, transform.y));
 
         updateTransform();
     }
