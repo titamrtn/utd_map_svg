@@ -29,6 +29,10 @@
         overflow: auto;
     }
 
+    .zoom_div_container svg {
+        position: relative;
+    }
+
     .zoom_container {
         position: absolute;
         bottom: 0;
@@ -1243,7 +1247,6 @@
     </div>
 </div>
 <script>
-
     const urls = <?= json_encode($urls) ?>;
     const countries = <?= json_encode($countries) ?>;
     document.addEventListener('DOMContentLoaded', function () {
@@ -1299,77 +1302,47 @@
     });
 
     const svg = document.querySelector('#<?= $mapID ?> svg');
-    const viewport = document.querySelector('#<?= $mapID ?> .map_viewport');
-    const zoomInButton = document.querySelector('#<?= $mapID ?> .zoom_in');
-    const zoomOutButton = document.querySelector('#<?= $mapID ?> .zoom_out');
+    let viewBox = svg.viewBox.baseVal;
 
-    let isPanning = false;
-    let startX, startY;
-    const transform = {x: 0, y: 0, scale: 1};
-
-    svg.addEventListener("mousedown", (e) => {
-        isPanning = true;
-        startX = e.clientX - transform.x;
-        startY = e.clientY - transform.y;
-    });
-
-    svg.addEventListener("mousemove", (e) => {
-        if (!isPanning || transform.scale === 1) return;
-
-        transform.x = e.clientX - startX;
-        transform.y = e.clientY - startY;
-
-        updateTransform();
-    });
-
-    svg.addEventListener("mouseup", () => (isPanning = false));
-    svg.addEventListener("mouseleave", () => (isPanning = false));
-
-    svg.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        zoom(e.deltaY < 0 ? 1.04 : 0.96, e.clientX, e.clientY);
-    });
-
-    zoomInButton.addEventListener("click", () => zoom(1.07));
-    zoomOutButton.addEventListener("click", () => zoom(0.93));
-
-    function zoom(scaleFactor) {
-        const oldScale = transform.scale;
-        transform.scale *= scaleFactor;
-
-        // Don't allow the zoom to go below 1 or above 5
-        transform.scale = Math.max(1, Math.min(5, transform.scale));
-
-        // Calculate the new center position
-        const centerX = svg.clientWidth / 2;
-        const centerY = svg.clientHeight / 2;
-
-        // Adjust the transform to recenter the view
-        transform.x = centerX - (centerX - transform.x) * (transform.scale / oldScale);
-        transform.y = centerY - (centerY - transform.y) * (transform.scale / oldScale);
-
-        // Ensure the map stays within the visible area
-        const maxX = (svg.clientWidth * (transform.scale - 1)) / 2;
-        const maxY = (svg.clientHeight * (transform.scale - 1)) / 2;
-
-        transform.x = Math.min(maxX, Math.max(-maxX, transform.x));
-        transform.y = Math.min(maxY, Math.max(-maxY, transform.y));
-
-        updateTransform();
+    if (!viewBox) {
+        viewBox = { x: 0, y: 0, width: svg.clientWidth, height: svg.clientHeight };
+        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
     }
 
-    function updateTransform() {
-        const svgRect = svg.getBoundingClientRect();
-        const viewportWidth = svgRect.width;
-        const viewportHeight = svgRect.height;
+    svg.addEventListener('wheel', (event) => {
+        event.preventDefault();
 
-        const centerX = (viewportWidth - (viewportWidth * transform.scale)) / 2;
-        const centerY = (viewportHeight - (viewportHeight * transform.scale)) / 2;
+        const zoomFactor = 1.1;
+        const { offsetX, offsetY, deltaY } = event;
+        const zoom = deltaY > 0 ? zoomFactor : 1 / zoomFactor;
 
-        viewport.setAttribute(
-            "transform",
-            `translate(${transform.x + centerX}, ${transform.y + centerY}) scale(${transform.scale})`
-        );
-    }
+        const mouseX = offsetX / svg.clientWidth * viewBox.width + viewBox.x;
+        const mouseY = offsetY / svg.clientHeight * viewBox.height + viewBox.y;
+
+        viewBox.width *= zoom;
+        viewBox.height *= zoom;
+
+        viewBox.x = mouseX - (mouseX - viewBox.x) * zoom;
+        viewBox.y = mouseY - (mouseY - viewBox.y) * zoom;
+
+        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+    });
+
+    const zoomIn = document.querySelector('#<?= $mapID ?> .zoom_in');
+    const zoomOut = document.querySelector('#<?= $mapID ?> .zoom_out');
+
+    zoomOut.addEventListener('click', () => {
+        const zoomFactor = 1.1;
+        viewBox.width *= zoomFactor;
+        viewBox.height *= zoomFactor;
+        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+    });
+
+    zoomIn.addEventListener('click', () => {
+        const zoomFactor = 1 / 1.1;
+        viewBox.width *= zoomFactor;
+        viewBox.height *= zoomFactor;
+        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+    });
 
 </script>
