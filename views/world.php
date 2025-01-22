@@ -1269,7 +1269,7 @@
                 let countryCode = path.getAttribute('id');
                 let title = null;
 
-                if(countryCode){
+                if (countryCode) {
                     title = countries[countryCode];
                 }
 
@@ -1299,50 +1299,148 @@
 
         });
 
-    });
+        const svg = document.querySelector('#<?= $mapID ?> svg');
+        let viewBox = svg.viewBox.baseVal;
 
-    const svg = document.querySelector('#<?= $mapID ?> svg');
-    let viewBox = svg.viewBox.baseVal;
+        if (!viewBox) {
+            viewBox = {x: 0, y: 0, width: svg.clientWidth, height: svg.clientHeight};
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        }
 
-    if (!viewBox) {
-        viewBox = { x: 0, y: 0, width: svg.clientWidth, height: svg.clientHeight };
-        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
-    }
+        // Zooming with mouse wheel
+        svg.addEventListener('wheel', (event) => {
+            event.preventDefault();
 
-    svg.addEventListener('wheel', (event) => {
-        event.preventDefault();
+            const zoomFactor = 1.1;
+            const {offsetX, offsetY, deltaY} = event;
+            const zoom = deltaY > 0 ? zoomFactor : 1 / zoomFactor;
 
-        const zoomFactor = 1.1;
-        const { offsetX, offsetY, deltaY } = event;
-        const zoom = deltaY > 0 ? zoomFactor : 1 / zoomFactor;
+            const mouseX = offsetX / svg.clientWidth * viewBox.width + viewBox.x;
+            const mouseY = offsetY / svg.clientHeight * viewBox.height + viewBox.y;
 
-        const mouseX = offsetX / svg.clientWidth * viewBox.width + viewBox.x;
-        const mouseY = offsetY / svg.clientHeight * viewBox.height + viewBox.y;
+            viewBox.width *= zoom;
+            viewBox.height *= zoom;
 
-        viewBox.width *= zoom;
-        viewBox.height *= zoom;
+            viewBox.x = mouseX - (mouseX - viewBox.x) * zoom;
+            viewBox.y = mouseY - (mouseY - viewBox.y) * zoom;
 
-        viewBox.x = mouseX - (mouseX - viewBox.x) * zoom;
-        viewBox.y = mouseY - (mouseY - viewBox.y) * zoom;
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        });
 
-        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
-    });
+        // Zooming with buttons
+        const zoomIn = document.querySelector('#<?= $mapID ?> .zoom_in');
+        const zoomOut = document.querySelector('#<?= $mapID ?> .zoom_out');
 
-    const zoomIn = document.querySelector('#<?= $mapID ?> .zoom_in');
-    const zoomOut = document.querySelector('#<?= $mapID ?> .zoom_out');
+        zoomOut.addEventListener('click', () => {
+            const zoomFactor = 1.1;
+            viewBox.width *= zoomFactor;
+            viewBox.height *= zoomFactor;
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        });
 
-    zoomOut.addEventListener('click', () => {
-        const zoomFactor = 1.1;
-        viewBox.width *= zoomFactor;
-        viewBox.height *= zoomFactor;
-        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
-    });
+        zoomIn.addEventListener('click', () => {
+            const zoomFactor = 1 / 1.1;
+            viewBox.width *= zoomFactor;
+            viewBox.height *= zoomFactor;
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        });
 
-    zoomIn.addEventListener('click', () => {
-        const zoomFactor = 1 / 1.1;
-        viewBox.width *= zoomFactor;
-        viewBox.height *= zoomFactor;
-        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        // Touch events for zooming
+        let initialDistance = null;
+
+        svg.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 2) {
+                initialDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+            }
+        });
+
+        svg.addEventListener('touchmove', (event) => {
+            if (event.touches.length === 2 && initialDistance) {
+                event.preventDefault();
+                const currentDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+                const zoom = currentDistance / initialDistance;
+
+                viewBox.width /= zoom;
+                viewBox.height /= zoom;
+
+                svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+                initialDistance = currentDistance;
+            }
+        });
+
+        svg.addEventListener('touchend', () => {
+            initialDistance = null;
+        });
+
+        // Touch events for dragging
+        let isDragging = false;
+        let startX, startY;
+
+        svg.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                isDragging = true;
+                startX = event.touches[0].clientX;
+                startY = event.touches[0].clientY;
+            }
+        });
+
+        svg.addEventListener('touchmove', (event) => {
+            if (isDragging && event.touches.length === 1) {
+                event.preventDefault();
+                const dx = event.touches[0].clientX - startX;
+                const dy = event.touches[0].clientY - startY;
+
+                viewBox.x -= dx * viewBox.width / svg.clientWidth;
+                viewBox.y -= dy * viewBox.height / svg.clientHeight;
+
+                svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+
+                startX = event.touches[0].clientX;
+                startY = event.touches[0].clientY;
+            }
+        });
+
+        svg.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Mouse events for dragging
+        svg.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+        });
+
+        svg.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                event.preventDefault();
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+
+                viewBox.x -= dx * viewBox.width / svg.clientWidth;
+                viewBox.y -= dy * viewBox.height / svg.clientHeight;
+
+                svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+
+                startX = event.clientX;
+                startY = event.clientY;
+            }
+        });
+
+        svg.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        svg.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
     });
 
 </script>
