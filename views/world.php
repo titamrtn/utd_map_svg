@@ -1347,6 +1347,7 @@
 
         // Touch events for zooming
         let initialDistance = null;
+        let initialViewBox = null;
 
         svg.addEventListener('touchstart', (event) => {
             if (event.touches.length === 2) {
@@ -1354,31 +1355,50 @@
                     event.touches[0].clientX - event.touches[1].clientX,
                     event.touches[0].clientY - event.touches[1].clientY
                 );
+
+                const currentViewBox = svg.getAttribute('viewBox').split(' ').map(Number);
+                initialViewBox = {
+                    x: currentViewBox[0],
+                    y: currentViewBox[1],
+                    width: currentViewBox[2],
+                    height: currentViewBox[3],
+                };
             }
         });
 
         svg.addEventListener('touchmove', (event) => {
             if (event.touches.length === 2 && initialDistance) {
                 event.preventDefault();
-                const currentDistance = Math.hypot(
+                const handDistance = Math.hypot(
                     event.touches[0].clientX - event.touches[1].clientX,
                     event.touches[0].clientY - event.touches[1].clientY
                 );
-                const zoom = currentDistance / initialDistance;
 
-                viewBox.width /= zoom;
-                viewBox.height /= zoom;
+                const zoomFactor = handDistance / initialDistance;
+
+                const rect = svg.getBoundingClientRect();
+                const centerX = ((event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left) / rect.width * initialViewBox.width + initialViewBox.x;
+                const centerY = ((event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top) / rect.height * initialViewBox.height + initialViewBox.y;
+
+                const newWidth = initialViewBox.width / zoomFactor;
+                const newHeight = initialViewBox.height / zoomFactor;
+
+                viewBox.x = centerX - (centerX - initialViewBox.x) / zoomFactor;
+                viewBox.y = centerY - (centerY - initialViewBox.y) / zoomFactor;
+                viewBox.width = newWidth;
+                viewBox.height = newHeight;
 
                 svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
-                initialDistance = currentDistance;
             }
         });
 
-        svg.addEventListener('touchend', () => {
-            initialDistance = null;
+        svg.addEventListener('touchend', (event) => {
+            if (event.touches.length < 2) {
+                initialDistance = null;
+                initialViewBox = null;
+            }
         });
 
-        // Touch events for dragging
         let isDragging = false;
         let startX, startY;
 
